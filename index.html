@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradvis implementering</title>
+    <!-- Inkluder Chart.js fra en CDN for å generere grafen -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+        :root {
+            --primary-bg: #1a2a47; /* Mørk bakgrunn */
+            --card-bg: #0c1b3c;    /* Veldig mørk bakgrunn for paneler */
+            --text-dark: #e1eafc;  /* Lys tekst */
+            --text-light: #98a6c8; /* Lysere tekst for etiketter */
+            --border-color: #2b3a5a; /* Mørk kantlinje */
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-purple: #9b59b6;
+            --accent-orange: #e67e22;
+            --shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            --chart-bar-gray: #5d6d7e; /* Ny grå farge for søyler */
+            --chart-bar-light-blue: #6cb8e8; /* Ny lysere blå for søyler */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            width: 100%;
+            /* Fjerner max-width for å la den fylle mer av skjermen */
+            max-width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr 2fr;
+            }
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 992px) {
+            .chart-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .panel, .chart-container {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+        
+        .input-with-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .input-with-value span {
+            font-size: 1rem;
+            font-weight: 500;
+            width: 3rem;
+            text-align: right;
+            color: var(--text-dark);
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-dark);
+            background-color: var(--border-color);
+        }
+
+        /* Ny styling for de klikkbare boksene */
+        .box-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .box-option {
+            background-color: var(--border-color);
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-dark);
+            user-select: none;
+        }
+
+        .box-option.active {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: var(--card-bg);
+            box-shadow: var(--shadow);
+        }
+
+        .summary-container {
+            margin-top: 0.5rem; /* Mindre toppmargin for å redusere plassen */
+            background-color: var(--primary-bg);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .summary-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-dark);
+        }
+        
+        .summary-text strong {
+            font-weight: 700;
+        }
+        
+        /* Fjernet fast høyde for bedre responsivitet */
+        #mainChart, #volatilityChart, #stockAllocationChart {
+            max-height: 400px;
+        }
+
+        /* Styling for Chart.js tooltips */
+        .chartjs-tooltip {
+            background-color: rgba(12, 27, 60, 0.9);
+            border: 1px solid #2b3a5a;
+            border-radius: 0.5rem;
+            color: #e1eafc;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Kontrollpanel -->
+        <div class="panel">
+            <h1>Gradvis implementering</h1>
+            <div class="input-group">
+                <label for="investmentAmount">Total investering (kr)</label>
+                <!-- Bruker et vanlig tekstfelt for å vise tusen-deler -->
+                <input type="text" id="investmentAmount" value="10 000 000">
+            </div>
+            
+            <!-- Nytt inputfelt for Markedsutvikling med bokser -->
+            <div class="input-group">
+                <label>Markedsutvikling (%)</label>
+                <div id="marketGrowthBoxes" class="box-container">
+                    <div class="box-option" data-value="-10">-10%</div>
+                    <div class="box-option" data-value="-5">-5%</div>
+                    <div class="box-option" data-value="0">0%</div>
+                    <div class="box-option" data-value="5">+5%</div>
+                    <div class="box-option active" data-value="10">+10%</div>
+                    <div class="box-option" data-value="15">+15%</div>
+                    <div class="box-option" data-value="20">+20%</div>
+                </div>
+            </div>
+
+            <!-- Nytt inputfelt for Volatilitet med bokser -->
+            <div class="input-group">
+                <label>Volatilitet (%)</label>
+                <div id="volatilityBoxes" class="box-container">
+                    <div class="box-option" data-value="0">Ingen</div>
+                    <div class="box-option" data-value="5">Veldig lav</div>
+                    <div class="box-option" data-value="10">Lav</div>
+                    <div class="box-option active" data-value="20">Normal</div>
+                    <div class="box-option" data-value="30">Høy</div>
+                    <div class="box-option" data-value="40">Ekstra høy</div>
+                    <div class="box-option" data-value="50">Ekstremt høy</div>
+                </div>
+            </div>
+
+            <!-- Nytt inputfelt for Bankrente med bokser -->
+            <div class="input-group">
+                <label>Bankrente på ventende kapital (%)</label>
+                <div id="bankRateBoxes" class="box-container">
+                    <div class="box-option" data-value="1">1%</div>
+                    <div class="box-option" data-value="2">2%</div>
+                    <div class="box-option" data-value="3">3%</div>
+                    <div class="box-option active" data-value="4">4%</div>
+                    <div class="box-option" data-value="5">5%</div>
+                    <div class="box-option" data-value="6">6%</div>
+                    <div class="box-option" data-value="7">7%</div>
+                </div>
+            </div>
+
+            <!-- Nytt inputfelt for aksjeandel, basert på referansebilde -->
+            <div class="input-group">
+                <label>Aksjeandel første år (%)</label>
+                <div id="stockAllocationInput" class="box-container">
+                    <div class="box-option" data-value="0">100% Renter</div>
+                    <div class="box-option" data-value="20">20% Aksjer</div>
+                    <div class="box-option" data-value="45">45% Aksjer</div>
+                    <div class="box-option active" data-value="55">55% Aksjer</div>
+                    <div class="box-option" data-value="65">65% Aksjer</div>
+                    <div class="box-option" data-value="85">85% Aksjer</div>
+                    <div class="box-option" data-value="100">100% Aksjer</div>
+                </div>
+            </div>
+
+            <!-- Nytt inputfelt for Investeringsfrekvens med bokser -->
+            <div class="input-group">
+                <label>Investeringsfrekvens</label>
+                <div id="frequencyBoxes" class="box-container">
+                    <div class="box-option" data-value="daily">Daglig</div>
+                    <div class="box-option" data-value="weekly">Ukentlig</div>
+                    <div class="box-option" data-value="monthly">Månedlig</div>
+                    <div class="box-option active" data-value="quarterly">Kvartalsvis</div>
+                    <div class="box-option" data-value="half-yearly">Halvårlig</div>
+                    <div class="box-option" data-value="yearly">Årlig</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafikk-område -->
+        <div class="chart-container">
+            <div>
+                <h2>Porteføljeverdi første 12 mnd</h2>
+                <canvas id="mainChart"></canvas>
+            </div>
+            <div class="summary-container">
+                <p id="summary" class="summary-text"></p>
+            </div>
+            <div>
+                <h2>Volatilitet per måned</h2>
+                <canvas id="volatilityChart"></canvas>
+            </div>
+             <div>
+                <h2>Aksjeandel per mnd</h2>
+                <canvas id="stockAllocationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to all HTML elements
+            const mainChartCanvas = document.getElementById('mainChart');
+            const volatilityChartCanvas = document.getElementById('volatilityChart');
+            const stockAllocationChartCanvas = document.getElementById('stockAllocationChart');
+            const investmentAmountInput = document.getElementById('investmentAmount');
+
+            const marketGrowthContainer = document.getElementById('marketGrowthBoxes');
+            const volatilityContainer = document.getElementById('volatilityBoxes');
+            const bankRateContainer = document.getElementById('bankRateBoxes');
+            const stockAllocationContainer = document.getElementById('stockAllocationInput');
+            const frequencyContainer = document.getElementById('frequencyBoxes');
+            
+            const summaryElement = document.getElementById('summary');
+
+            let mainChart;
+            let volatilityChart;
+            let stockAllocationChart;
+            const investmentPeriod = 1; // Investeringsperioden er nå fastsatt til 1 år
+            
+            // Format number with thousand separators
+            function formatNumber(number) {
+                return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+            }
+
+            // Function to simulate market data
+            function simulateMarketData(marketGrowth, volatility, days) {
+                const initialMarketIndex = 10000;
+                const finalGrowthFactor = 1 + (marketGrowth / 100);
+                const marketData = [];
+
+                // 1. Generate an exponential growth curve that hits the exact end value
+                const growthRatePerDay = Math.pow(finalGrowthFactor, 1 / days);
+                
+                // 2. Generate a random "noise" curve that starts and ends at 0
+                let randomWalk = [0];
+                let sum = 0;
+                const dailyVolatilityFactor = volatility / 100 / Math.sqrt(365);
+                for (let i = 1; i < days; i++) {
+                    sum += (Math.random() * 2 - 1) * dailyVolatilityFactor;
+                    randomWalk.push(sum);
+                }
+                const noiseCorrection = -randomWalk[days - 1] / days;
+                const finalNoiseArray = randomWalk.map((v, i) => v + noiseCorrection * i);
+                
+                // 3. Combine the smooth growth curve with the corrected noise
+                for (let i = 0; i < days; i++) {
+                    const baseValue = initialMarketIndex * Math.pow(growthRatePerDay, i);
+                    const volatileValue = baseValue * (1 + finalNoiseArray[i]);
+                    marketData.push(volatileValue);
+                }
+
+                return marketData;
+            }
+
+            // Function to calculate the value of a lump sum investment on day 1
+            function calculateLumpSum(initialAmount, marketData) {
+                const lumpSumValues = [];
+                const initialMarketIndex = marketData[0];
+                for (let i = 0; i < marketData.length; i++) {
+                    const currentValue = initialAmount * (marketData[i] / initialMarketIndex);
+                    lumpSumValues.push(currentValue);
+                }
+                return lumpSumValues;
+            }
+
+            // Function to calculate the periodic strategy and the stock portion
+            function calculatePeriodic(initialAmount, marketData, frequency, bankRate, targetStockAllocation) {
+                const days = marketData.length;
+                let numberOfIntervals;
+                switch (frequency) {
+                    case 'daily': numberOfIntervals = 365; break;
+                    case 'weekly': numberOfIntervals = 52; break;
+                    case 'monthly': numberOfIntervals = 12; break;
+                    case 'quarterly': numberOfIntervals = 4; break;
+                    case 'half-yearly': numberOfIntervals = 2; break;
+                    case 'yearly': numberOfIntervals = 1; break;
+                    default: numberOfIntervals = 4;
+                }
+                
+                const totalStockInvestmentAmount = initialAmount * (targetStockAllocation / 100);
+                const periodicStockInvestment = totalStockInvestmentAmount / numberOfIntervals;
+                const daysPerInterval = Math.round(days / numberOfIntervals);
+                
+                // Correct calculation for daily compounding bank rate
+                const dailyBankRateFactor = Math.pow(1 + bankRate / 100, 1 / days);
+                
+                const totalValues = [];
+                let portfolioStockValue = 0; 
+                let portfolioCashValue = initialAmount;
+                let investmentDay = 0;
+                
+                for (let i = 0; i < days; i++) {
+                    if (i === investmentDay && investmentDay < days) {
+                         portfolioCashValue -= periodicStockInvestment;
+                         portfolioStockValue += periodicStockInvestment;
+                         investmentDay += daysPerInterval;
+                    }
+                    
+                    if (i > 0) {
+                        const dailyReturn = marketData[i] / marketData[i - 1];
+                        portfolioStockValue *= dailyReturn;
+                    }
+                    
+                    portfolioCashValue *= dailyBankRateFactor;
+
+                    totalValues.push(portfolioStockValue + portfolioCashValue);
+                }
+                return { totalValues };
+            }
+
+            // New function to calculate monthly volatility
+            function calculateMonthlyVolatility(marketData) {
+                const monthlyVolatility = [];
+                const dailyReturns = [];
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+                const daysInYear = 365;
+
+                for (let i = 1; i < daysInYear; i++) {
+                    dailyReturns.push((marketData[i] - marketData[i-1]) / marketData[i-1]);
+                }
+                
+                const daysInMonth = daysInYear / 12;
+                
+                for(let i = 0; i < 12; i++) {
+                    const startDay = Math.round(i * daysInMonth);
+                    const endDay = Math.round((i + 1) * daysInMonth);
+                    const monthReturns = dailyReturns.slice(startDay, endDay);
+                    
+                    if (monthReturns.length > 0) {
+                        const mean = monthReturns.reduce((acc, val) => acc + val, 0) / monthReturns.length;
+                        const variance = monthReturns.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / monthReturns.length;
+                        const stdDev = Math.sqrt(variance) * Math.sqrt(252);
+                        monthlyVolatility.push((stdDev * 100).toFixed(2));
+                    } else {
+                        monthlyVolatility.push(0);
+                    }
+                }
+                return {monthlyVolatility, months};
+            }
+
+            // Corrected function to calculate monthly stock allocation
+            function calculateMonthlyAllocation(initialAmount, frequency, targetStockAllocation) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+                const monthlyAllocation = Array(12).fill(0);
+                const totalInvestment = initialAmount * (targetStockAllocation / 100);
+
+                if (totalInvestment === 0) {
+                    return {monthlyAllocation, months};
+                }
+
+                let numInvestments;
+                switch (frequency) {
+                    case 'daily': numInvestments = 365; break;
+                    case 'weekly': numInvestments = 52; break;
+                    case 'monthly': numInvestments = 12; break;
+                    case 'quarterly': numInvestments = 4; break;
+                    case 'half-yearly': numInvestments = 2; break;
+                    case 'yearly': numInvestments = 1; break;
+                    default: numInvestments = 4;
+                }
+
+                const investmentPerInterval = totalInvestment / numInvestments;
+                let cumulativeInvested = 0;
+
+                const investmentsPerMonth = {
+                    'daily': Math.round(365 / 12),
+                    'weekly': Math.round(52 / 12),
+                    'monthly': 1,
+                    'quarterly': 1,
+                    'half-yearly': 1,
+                    'yearly': 1
+                };
+
+                for(let i = 0; i < 12; i++) {
+                    let monthlyInvestments = 0;
+                    if (frequency === 'daily') {
+                        monthlyInvestments = investmentsPerMonth.daily;
+                    } else if (frequency === 'weekly') {
+                        monthlyInvestments = investmentsPerMonth.weekly;
+                    } else if (frequency === 'monthly') {
+                        monthlyInvestments = 1;
+                    } else if (frequency === 'quarterly' && i % 3 === 0) {
+                        monthlyInvestments = 1;
+                    } else if (frequency === 'half-yearly' && i % 6 === 0) {
+                        monthlyInvestments = 1;
+                    } else if (frequency === 'yearly' && i === 0) {
+                        monthlyInvestments = 1;
+                    }
+                    
+                    cumulativeInvested += monthlyInvestments * (totalInvestment / numInvestments);
+                    const allocationPercentage = (cumulativeInvested / initialAmount) * 100;
+                    monthlyAllocation[i] = Math.min(allocationPercentage, targetStockAllocation).toFixed(2);
+                }
+
+                return {monthlyAllocation, months};
+            }
+            
+            // Function to get the value of the active box in a container
+            function getActiveBoxValue(container) {
+                const activeBox = container.querySelector('.box-option.active');
+                return activeBox ? parseFloat(activeBox.getAttribute('data-value')) || activeBox.getAttribute('data-value') : null;
+            }
+            
+            // Function to handle box clicks
+            function handleBoxClick(event) {
+                const clickedBox = event.target.closest('.box-option');
+                if (!clickedBox) return;
+
+                const container = event.currentTarget;
+                container.querySelectorAll('.box-option').forEach(box => {
+                    box.classList.remove('active');
+                });
+                clickedBox.classList.add('active');
+                updateDashboard();
+            }
+
+            // Main function to update the dashboard
+            function updateDashboard() {
+                const investmentAmount = parseFloat(investmentAmountInput.value.replace(/\s/g, '')); // Fjern tusen-deler
+                const marketGrowth = getActiveBoxValue(marketGrowthContainer);
+                const volatility = getActiveBoxValue(volatilityContainer);
+                const bankRate = getActiveBoxValue(bankRateContainer);
+                const stockAllocation = getActiveBoxValue(stockAllocationContainer);
+                const frequency = getActiveBoxValue(frequencyContainer);
+                const days = investmentPeriod * 365;
+
+                const marketData = simulateMarketData(marketGrowth, volatility, days);
+                
+                const fullLumpSumValues = calculateLumpSum(investmentAmount, marketData);
+                const { totalValues } = calculatePeriodic(investmentAmount, marketData, frequency, bankRate, stockAllocation);
+                
+                const { monthlyVolatility, months } = calculateMonthlyVolatility(marketData);
+                const { monthlyAllocation } = calculateMonthlyAllocation(investmentAmount, frequency, stockAllocation);
+                
+                const labels = Array.from({ length: days }, (_, i) => `Dag ${i + 1}`);
+                const finalLumpSum = fullLumpSumValues[fullLumpSumValues.length - 1];
+                const finalPeriodic = totalValues[totalValues.length - 1];
+                
+                const rootStyles = getComputedStyle(document.documentElement);
+                const accentBlue = rootStyles.getPropertyValue('--accent-blue').trim();
+                const accentGreen = rootStyles.getPropertyValue('--accent-green').trim();
+                const chartTextColor = rootStyles.getPropertyValue('--text-dark').trim();
+                const chartBarGray = rootStyles.getPropertyValue('--chart-bar-gray').trim();
+                const chartBarLightBlue = rootStyles.getPropertyValue('--chart-bar-light-blue').trim();
+
+                if (mainChart) {
+                    mainChart.data.labels = labels;
+                    mainChart.data.datasets[0].data = fullLumpSumValues; 
+                    mainChart.data.datasets[1].data = totalValues;
+                    mainChart.update();
+                } else {
+                    const ctx = mainChartCanvas.getContext('2d');
+                    mainChart = new Chart(ctx, {
+                        type: 'line', 
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Engangsinnskudd dag 1', 
+                                data: fullLumpSumValues,
+                                borderColor: accentBlue,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                yAxisID: 'y'
+                            }, {
+                                label: 'Portefølje med gradvis implementering',
+                                data: totalValues,
+                                borderColor: accentGreen,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                yAxisID: 'y'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { 
+                                    display: false,
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                                },
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    title: { display: true, text: 'Verdi (kr)', color: chartTextColor },
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: chartTextColor }
+                                }
+                            },
+                            plugins: {
+                                legend: { 
+                                    position: 'bottom',
+                                    labels: { color: chartTextColor }
+                                },
+                                tooltip: { 
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: (tooltipItems) => {
+                                            const daysLabel = tooltipItems[0].label;
+                                            return `Dag ${parseInt(daysLabel.split(' ')[1])}`;
+                                        },
+                                        label: (context) => {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += new Intl.NumberFormat('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                if (volatilityChart) {
+                    volatilityChart.data.labels = months;
+                    volatilityChart.data.datasets[0].data = monthlyVolatility;
+                    volatilityChart.update();
+                } else {
+                    const ctx = volatilityChartCanvas.getContext('2d');
+                    volatilityChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: months,
+                            datasets: [{
+                                label: 'Volatilitet (%)',
+                                data: monthlyVolatility,
+                                backgroundColor: chartBarGray,
+                                borderWidth: 1,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: chartTextColor }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Volatilitet (%)', color: chartTextColor },
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: chartTextColor }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: (tooltipItems) => {
+                                            return tooltipItems[0].label;
+                                        },
+                                        label: (context) => {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += `${context.parsed.y}%`;
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                if (stockAllocationChart) {
+                    stockAllocationChart.data.labels = months;
+                    stockAllocationChart.data.datasets[0].data = monthlyAllocation;
+                    stockAllocationChart.update();
+                } else {
+                    const ctx = stockAllocationChartCanvas.getContext('2d');
+                    stockAllocationChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: months,
+                            datasets: [{
+                                label: 'Aksjeandel (%)',
+                                data: monthlyAllocation,
+                                backgroundColor: chartBarLightBlue,
+                                borderWidth: 1,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: chartTextColor }
+                                },
+                                y: {
+                                    title: { display: true, text: 'Aksjeandel (%)', color: chartTextColor },
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { 
+                                        color: chartTextColor,
+                                        callback: function(value) {
+                                            return value + '%';
+                                        }
+                                    },
+                                    min: 0,
+                                    max: 100
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: (tooltipItems) => {
+                                            return tooltipItems[0].label;
+                                        },
+                                        label: (context) => {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += `${context.parsed.y}%`;
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const resultText = finalLumpSum > finalPeriodic
+                    ? `I denne simuleringen endte **Engangsinnskudd dag 1** med en høyere verdi (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn den periodiske strategien (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet hadde en sterk oppadgående trend tidlig i perioden, noe som favoriserte investeringen på dag én.`
+                    : `I denne simuleringen endte **Portefølje med gradvis implementering** med en høyere verdi (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn Engangsinnskudd dag 1 (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet opplevde nedgang eller høy volatilitet tidlig i perioden, noe som lot den periodiske strategien kjøpe andeler til en lavere gjennomsnittlig pris.`;
+
+                summaryElement.innerHTML = resultText;
+            }
+
+            investmentAmountInput.addEventListener('input', (e) => {
+                const value = e.target.value.replace(/\s/g, '');
+                if (!isNaN(value)) {
+                    e.target.value = formatNumber(value);
+                }
+            });
+
+            marketGrowthContainer.addEventListener('click', handleBoxClick);
+            volatilityContainer.addEventListener('click', handleBoxClick);
+            bankRateContainer.addEventListener('click', handleBoxClick);
+            stockAllocationContainer.addEventListener('click', handleBoxClick);
+            frequencyContainer.addEventListener('click', handleBoxClick);
+            
+            updateDashboard();
+            
+            window.addEventListener('resize', () => {
+                if (mainChart) {
+                    mainChart.resize();
+                }
+                if (volatilityChart) {
+                    volatilityChart.resize();
+                }
+                if (stockAllocationChart) {
+                    stockAllocationChart.resize();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
