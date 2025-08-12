@@ -17,7 +17,7 @@
             --border-color: #2b3a5a; /* Mørk kantlinje */
             --accent-blue: #3498db;
             --accent-green: #2ecc71;
-            --accent-purple: #9b59b6;
+            --accent-red: #e74c3c; /* Rød for negative verdier */
             --accent-orange: #e67e22;
             --shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             --chart-bar-gray: #5d6d7e; /* Ny grå farge for søyler */
@@ -242,6 +242,19 @@
                 </div>
             </div>
 
+            <!-- Flyttet Investeringsfrekvens hit -->
+            <div class="input-group">
+                <label>Investeringsfrekvens</label>
+                <div id="frequencyBoxes" class="box-container">
+                    <div class="box-option" data-value="daily">Daglig</div>
+                    <div class="box-option" data-value="weekly">Ukentlig</div>
+                    <div class="box-option" data-value="monthly">Månedlig</div>
+                    <div class="box-option active" data-value="quarterly">Kvartalsvis</div>
+                    <div class="box-option" data-value="half-yearly">Halvårlig</div>
+                    <div class="box-option" data-value="yearly">Årlig</div>
+                </div>
+            </div>
+
             <!-- Nytt inputfelt for Volatilitet med bokser -->
             <div class="input-group">
                 <label>Volatilitet (%)</label>
@@ -283,19 +296,6 @@
                     <div class="box-option" data-value="100">100% Aksjer</div>
                 </div>
             </div>
-
-            <!-- Nytt inputfelt for Investeringsfrekvens med bokser -->
-            <div class="input-group">
-                <label>Investeringsfrekvens</label>
-                <div id="frequencyBoxes" class="box-container">
-                    <div class="box-option" data-value="daily">Daglig</div>
-                    <div class="box-option" data-value="weekly">Ukentlig</div>
-                    <div class="box-option" data-value="monthly">Månedlig</div>
-                    <div class="box-option active" data-value="quarterly">Kvartalsvis</div>
-                    <div class="box-option" data-value="half-yearly">Halvårlig</div>
-                    <div class="box-option" data-value="yearly">Årlig</div>
-                </div>
-            </div>
         </div>
 
         <!-- Grafikk-område -->
@@ -304,20 +304,17 @@
                 <h2>Porteføljeverdi første 12 mnd</h2>
                 <canvas id="mainChart"></canvas>
             </div>
-            <div class="summary-container">
-                <p id="summary" class="summary-text"></p>
-            </div>
             <div>
-                <h2>Volatilitet per måned</h2>
-                <canvas id="volatilityChart"></canvas>
-            </div>
-             <div>
                 <h2>Aksjeandel per mnd</h2>
                 <canvas id="stockAllocationChart"></canvas>
             </div>
             <div>
                 <h2>Avkastning per mnd</h2>
                 <canvas id="returnChart"></canvas>
+            </div>
+            <div>
+                <h2>Volatilitet per måned</h2>
+                <canvas id="volatilityChart"></canvas>
             </div>
         </div>
     </div>
@@ -338,8 +335,6 @@
             const stockAllocationContainer = document.getElementById('stockAllocationInput');
             const frequencyContainer = document.getElementById('frequencyBoxes');
             
-            const summaryElement = document.getElementById('summary');
-
             let mainChart;
             let volatilityChart;
             let stockAllocationChart;
@@ -621,14 +616,17 @@
                 const chartTextColor = rootStyles.getPropertyValue('--text-dark').trim();
                 const chartBarGray = rootStyles.getPropertyValue('--chart-bar-gray').trim();
                 const chartBarLightBlue = rootStyles.getPropertyValue('--chart-bar-light-blue').trim();
-                const accentPurple = rootStyles.getPropertyValue('--accent-purple').trim();
+                const accentRed = rootStyles.getPropertyValue('--accent-red').trim();
+
 
                 if (mainChart) {
                     mainChart.data.labels = labels;
                     mainChart.data.datasets[0].data = fullLumpSumValues; 
                     mainChart.data.datasets[1].data = totalValues;
-                    mainChart.options.scales.y.min = Math.floor(Math.min(...fullLumpSumValues, ...totalValues) / 1000000) * 1000000;
-                    mainChart.options.scales.y.max = Math.ceil(Math.max(...fullLumpSumValues, ...totalValues) / 1000000) * 1000000;
+                    const minMain = Math.min(...fullLumpSumValues, ...totalValues);
+                    const maxMain = Math.max(...fullLumpSumValues, ...totalValues);
+                    mainChart.options.scales.y.min = Math.floor(minMain / 1000000) * 1000000;
+                    mainChart.options.scales.y.max = Math.ceil(maxMain / 1000000) * 1000000;
                     mainChart.update();
                 } else {
                     const ctx = mainChartCanvas.getContext('2d');
@@ -838,6 +836,7 @@
                 if (returnChart) {
                     returnChart.data.labels = months;
                     returnChart.data.datasets[0].data = periodicReturns;
+                    returnChart.data.datasets[0].backgroundColor = periodicReturns.map(value => value >= 0 ? accentGreen : accentRed);
                     returnChart.data.datasets[1].data = movingAverage;
                     const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
                     const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
@@ -856,7 +855,7 @@
                              datasets: [{
                                  label: 'Månedlig avkastning (%)',
                                  data: periodicReturns,
-                                 backgroundColor: periodicReturns.map(value => value >= 0 ? accentGreen : accentPurple),
+                                 backgroundColor: periodicReturns.map(value => value >= 0 ? accentGreen : accentRed),
                              }, {
                                  label: 'Glidende gjennomsnitt (3 mnd)',
                                  data: movingAverage,
@@ -918,12 +917,7 @@
                 }
 
 
-                // Update the summary text
-                const resultText = finalLumpSum > finalPeriodic
-                    ? `I denne simuleringen endte **Engangsinnskudd dag 1** med en høyere verdi (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn den periodiske strategien (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet hadde en sterk oppadgående trend tidlig i perioden, noe som favoriserte investeringen på dag én.`
-                    : `I denne simuleringen endte **Portefølje med gradvis implementering** med en høyere verdi (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn Engangsinnskudd dag 1 (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet opplevde nedgang eller høy volatilitet tidlig i perioden, noe som lot den periodiske strategien kjøpe andeler til en lavere gjennomsnittlig pris.`;
-
-                summaryElement.innerHTML = resultText;
+                
             }
 
             // Update the display value of the range input in real time
