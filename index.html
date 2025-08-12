@@ -108,16 +108,18 @@
         
         .input-with-value {
             display: flex;
-            align-items: center;
+            flex-direction: column; /* Endret til column for å flytte teksten under slideren */
+            align-items: flex-start;
             gap: 0.5rem;
         }
         
         .input-with-value span {
             font-size: 1rem;
             font-weight: 500;
-            width: 3rem;
-            text-align: right;
+            width: 100%;
+            text-align: center; /* Sentrerer teksten under slideren */
             color: var(--text-dark);
+            margin-top: 0.5rem;
         }
 
         input[type="text"], input[type="number"], select {
@@ -129,6 +131,27 @@
             font-size: 1rem;
             color: var(--text-dark);
             background-color: var(--border-color);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--border-color);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
         }
 
         /* Ny styling for de klikkbare boksene */
@@ -178,7 +201,7 @@
         }
         
         /* Fjernet fast høyde for bedre responsivitet */
-        #mainChart, #volatilityChart, #stockAllocationChart {
+        #mainChart, #volatilityChart, #stockAllocationChart, #returnChart {
             max-height: 400px;
         }
 
@@ -199,8 +222,10 @@
             <h1>Gradvis implementering</h1>
             <div class="input-group">
                 <label for="investmentAmount">Total investering (kr)</label>
-                <!-- Bruker et vanlig tekstfelt for å vise tusen-deler -->
-                <input type="text" id="investmentAmount" value="10 000 000">
+                <div class="input-with-value">
+                    <input type="range" id="investmentAmount" min="2500000" max="100000000" value="10000000" step="500000">
+                    <span id="investmentAmountValue">10 000 000</span>
+                </div>
             </div>
             
             <!-- Nytt inputfelt for Markedsutvikling med bokser -->
@@ -290,6 +315,10 @@
                 <h2>Aksjeandel per mnd</h2>
                 <canvas id="stockAllocationChart"></canvas>
             </div>
+            <div>
+                <h2>Avkastning per mnd</h2>
+                <canvas id="returnChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -299,7 +328,9 @@
             const mainChartCanvas = document.getElementById('mainChart');
             const volatilityChartCanvas = document.getElementById('volatilityChart');
             const stockAllocationChartCanvas = document.getElementById('stockAllocationChart');
+            const returnChartCanvas = document.getElementById('returnChart');
             const investmentAmountInput = document.getElementById('investmentAmount');
+            const investmentAmountValueSpan = document.getElementById('investmentAmountValue');
 
             const marketGrowthContainer = document.getElementById('marketGrowthBoxes');
             const volatilityContainer = document.getElementById('volatilityBoxes');
@@ -312,6 +343,7 @@
             let mainChart;
             let volatilityChart;
             let stockAllocationChart;
+            let returnChart;
             const investmentPeriod = 1; // Investeringsperioden er nå fastsatt til 1 år
             
             // Format number with thousand separators
@@ -492,6 +524,48 @@
                 return {monthlyAllocation, months};
             }
             
+            // New function to calculate monthly returns and moving average
+            function calculateMonthlyReturns(lumpSumData, periodicData) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+                const daysInMonth = Math.round(365 / 12);
+                
+                const lumpSumReturns = [];
+                const periodicReturns = [];
+
+                for (let i = 0; i < 12; i++) {
+                    const startDay = i * daysInMonth;
+                    const endDay = (i + 1) * daysInMonth;
+                    
+                    const lumpSumStartValue = lumpSumData[startDay] || 0;
+                    const lumpSumEndValue = lumpSumData[endDay - 1] || lumpSumData[lumpSumData.length - 1];
+
+                    const periodicStartValue = periodicData[startDay] || 0;
+                    const periodicEndValue = periodicData[endDay - 1] || periodicData[periodicData.length - 1];
+
+                    const lumpSumReturn = (lumpSumStartValue !== 0) ? ((lumpSumEndValue / lumpSumStartValue) - 1) * 100 : 0;
+                    const periodicReturn = (periodicStartValue !== 0) ? ((periodicEndValue / periodicStartValue) - 1) * 100 : 0;
+                    
+                    lumpSumReturns.push(lumpSumReturn.toFixed(2));
+                    periodicReturns.push(periodicReturn.toFixed(2));
+                }
+                
+                // Calculate 3-month moving average for periodic returns
+                const movingAverage = [];
+                for (let i = 0; i < 12; i++) {
+                    let sum = 0;
+                    let count = 0;
+                    for (let j = 0; j < 3; j++) {
+                        if (i - j >= 0) {
+                            sum += parseFloat(periodicReturns[i - j]);
+                            count++;
+                        }
+                    }
+                    movingAverage.push((sum / count).toFixed(2));
+                }
+
+                return { lumpSumReturns, periodicReturns, movingAverage, months };
+            }
+
             // Function to get the value of the active box in a container
             function getActiveBoxValue(container) {
                 const activeBox = container.querySelector('.box-option.active');
@@ -510,10 +584,17 @@
                 clickedBox.classList.add('active');
                 updateDashboard();
             }
+            
+            // Event listener for the new range input
+            investmentAmountInput.addEventListener('input', () => {
+                const value = parseInt(investmentAmountInput.value);
+                investmentAmountValueSpan.textContent = formatNumber(value);
+                updateDashboard();
+            });
 
             // Main function to update the dashboard
             function updateDashboard() {
-                const investmentAmount = parseFloat(investmentAmountInput.value.replace(/\s/g, '')); // Fjern tusen-deler
+                const investmentAmount = parseFloat(investmentAmountInput.value); 
                 const marketGrowth = getActiveBoxValue(marketGrowthContainer);
                 const volatility = getActiveBoxValue(volatilityContainer);
                 const bankRate = getActiveBoxValue(bankRateContainer);
@@ -528,6 +609,7 @@
                 
                 const { monthlyVolatility, months } = calculateMonthlyVolatility(marketData);
                 const { monthlyAllocation } = calculateMonthlyAllocation(investmentAmount, frequency, stockAllocation);
+                const { lumpSumReturns, periodicReturns, movingAverage } = calculateMonthlyReturns(fullLumpSumValues, totalValues);
                 
                 const labels = Array.from({ length: days }, (_, i) => `Dag ${i + 1}`);
                 const finalLumpSum = fullLumpSumValues[fullLumpSumValues.length - 1];
@@ -539,14 +621,19 @@
                 const chartTextColor = rootStyles.getPropertyValue('--text-dark').trim();
                 const chartBarGray = rootStyles.getPropertyValue('--chart-bar-gray').trim();
                 const chartBarLightBlue = rootStyles.getPropertyValue('--chart-bar-light-blue').trim();
+                const accentPurple = rootStyles.getPropertyValue('--accent-purple').trim();
 
                 if (mainChart) {
                     mainChart.data.labels = labels;
                     mainChart.data.datasets[0].data = fullLumpSumValues; 
                     mainChart.data.datasets[1].data = totalValues;
+                    mainChart.options.scales.y.min = Math.floor(Math.min(...fullLumpSumValues, ...totalValues) / 1000000) * 1000000;
+                    mainChart.options.scales.y.max = Math.ceil(Math.max(...fullLumpSumValues, ...totalValues) / 1000000) * 1000000;
                     mainChart.update();
                 } else {
                     const ctx = mainChartCanvas.getContext('2d');
+                    const minMain = Math.min(...fullLumpSumValues, ...totalValues);
+                    const maxMain = Math.max(...fullLumpSumValues, ...totalValues);
                     mainChart = new Chart(ctx, {
                         type: 'line', 
                         data: {
@@ -583,7 +670,9 @@
                                     position: 'left',
                                     title: { display: true, text: 'Verdi (kr)', color: chartTextColor },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: chartTextColor }
+                                    ticks: { color: chartTextColor, callback: function(value) { return value/1000000 + ' M'; } },
+                                    min: Math.floor(minMain / 1000000) * 1000000,
+                                    max: Math.ceil(maxMain / 1000000) * 1000000
                                 }
                             },
                             plugins: {
@@ -619,9 +708,15 @@
                 if (volatilityChart) {
                     volatilityChart.data.labels = months;
                     volatilityChart.data.datasets[0].data = monthlyVolatility;
+                    const minVol = Math.min(...monthlyVolatility.map(v => parseFloat(v)));
+                    const maxVol = Math.max(...monthlyVolatility.map(v => parseFloat(v)));
+                    volatilityChart.options.scales.y.min = Math.floor(minVol) - 1;
+                    volatilityChart.options.scales.y.max = Math.ceil(maxVol) + 1;
                     volatilityChart.update();
                 } else {
                     const ctx = volatilityChartCanvas.getContext('2d');
+                    const minVol = Math.min(...monthlyVolatility.map(v => parseFloat(v)));
+                    const maxVol = Math.max(...monthlyVolatility.map(v => parseFloat(v)));
                     volatilityChart = new Chart(ctx, {
                         type: 'bar',
                         data: {
@@ -644,7 +739,9 @@
                                 y: {
                                     title: { display: true, text: 'Volatilitet (%)', color: chartTextColor },
                                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                                    ticks: { color: chartTextColor }
+                                    ticks: { color: chartTextColor },
+                                    min: Math.floor(minVol) - 1,
+                                    max: Math.ceil(maxVol) + 1
                                 }
                             },
                             plugins: {
@@ -736,7 +833,92 @@
                         }
                     });
                 }
+                
+                // New return chart
+                if (returnChart) {
+                    returnChart.data.labels = months;
+                    returnChart.data.datasets[0].data = periodicReturns;
+                    returnChart.data.datasets[1].data = movingAverage;
+                    const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
+                    const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
+                    returnChart.options.scales.y.min = Math.floor(minReturn) - 1;
+                    returnChart.options.scales.y.max = Math.ceil(maxReturn) + 1;
+                    returnChart.update();
+                } else {
+                     const ctx = returnChartCanvas.getContext('2d');
+                     const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
+                     const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
 
+                     returnChart = new Chart(ctx, {
+                         type: 'bar',
+                         data: {
+                             labels: months,
+                             datasets: [{
+                                 label: 'Månedlig avkastning (%)',
+                                 data: periodicReturns,
+                                 backgroundColor: periodicReturns.map(value => value >= 0 ? accentGreen : accentPurple),
+                             }, {
+                                 label: 'Glidende gjennomsnitt (3 mnd)',
+                                 data: movingAverage,
+                                 type: 'line',
+                                 borderColor: accentBlue,
+                                 borderWidth: 2,
+                                 pointRadius: 4,
+                                 fill: false
+                             }]
+                         },
+                         options: {
+                             responsive: true,
+                             maintainAspectRatio: false,
+                             scales: {
+                                 x: {
+                                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                     ticks: { color: chartTextColor }
+                                 },
+                                 y: {
+                                     title: { display: true, text: 'Avkastning (%)', color: chartTextColor },
+                                     grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                     ticks: { 
+                                        color: chartTextColor,
+                                        callback: function(value) {
+                                            return value + '%';
+                                        }
+                                     },
+                                     min: Math.floor(minReturn) - 1,
+                                     max: Math.ceil(maxReturn) + 1
+                                 }
+                             },
+                             plugins: {
+                                 legend: { 
+                                     position: 'bottom',
+                                     labels: { color: chartTextColor }
+                                 },
+                                 tooltip: {
+                                     mode: 'index',
+                                     intersect: false,
+                                     callbacks: {
+                                         title: (tooltipItems) => {
+                                             return tooltipItems[0].label;
+                                         },
+                                         label: (context) => {
+                                             let label = context.dataset.label || '';
+                                             if (label) {
+                                                 label += ': ';
+                                             }
+                                             if (context.parsed.y !== null) {
+                                                 label += `${context.parsed.y}%`;
+                                             }
+                                             return label;
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     });
+                }
+
+
+                // Update the summary text
                 const resultText = finalLumpSum > finalPeriodic
                     ? `I denne simuleringen endte **Engangsinnskudd dag 1** med en høyere verdi (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn den periodiske strategien (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet hadde en sterk oppadgående trend tidlig i perioden, noe som favoriserte investeringen på dag én.`
                     : `I denne simuleringen endte **Portefølje med gradvis implementering** med en høyere verdi (${finalPeriodic.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr) enn Engangsinnskudd dag 1 (${finalLumpSum.toLocaleString('no-NO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} kr). Dette skjedde fordi markedet opplevde nedgang eller høy volatilitet tidlig i perioden, noe som lot den periodiske strategien kjøpe andeler til en lavere gjennomsnittlig pris.`;
@@ -744,11 +926,11 @@
                 summaryElement.innerHTML = resultText;
             }
 
-            investmentAmountInput.addEventListener('input', (e) => {
-                const value = e.target.value.replace(/\s/g, '');
-                if (!isNaN(value)) {
-                    e.target.value = formatNumber(value);
-                }
+            // Update the display value of the range input in real time
+            investmentAmountInput.addEventListener('input', () => {
+                const value = parseInt(investmentAmountInput.value);
+                investmentAmountValueSpan.textContent = formatNumber(value);
+                updateDashboard();
             });
 
             marketGrowthContainer.addEventListener('click', handleBoxClick);
@@ -768,6 +950,9 @@
                 }
                 if (stockAllocationChart) {
                     stockAllocationChart.resize();
+                }
+                if (returnChart) {
+                    returnChart.resize();
                 }
             });
         });
