@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary-bg: #1a2a47; /* Mørk bakgrunn */
+    --card-bg: #0c1b3c;    /* Veldig mørk bakgrunn for paneler */
+    --text-dark: #e1eafc;  /* Lys tekst */
+    --text-light: #98a6c8; /* Lysere tekst for etiketter */
+    --border-color: #2b3a5a; /* Mørk kantlinje */
+    --accent-blue: #3498db;
+    --accent-green: #2ecc71;
+    --accent-red: #e74c3c; /* Rød for negative verdier */
+    --accent-orange: #e67e22;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --chart-bar-gray: #5d6d7e; /* Ny grå farge for søyler */
+    --chart-bar-light-blue: #6cb8e8; /* Ny lysere blå for søyler */
+}
+
+/* Sikrer at html og body fyller hele visningsområdet */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400; /* Whitney Book equivalent for body text */
+    background-color: var(--primary-bg);
+    color: var(--text-dark);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    width: 100%;
+    max-width: 1280px;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+/* Optimalisert for 1280x800 skjerm */
+@media (min-width: 1280px) {
+    .dashboard-container {
+        grid-template-columns: 1fr 2fr;
+        gap: 1.5rem;
+    }
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 1280px) {
+    .chart-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+}
+
+.panel, .chart-container {
+    background-color: var(--card-bg);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    height: 100%;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.disclaimer-btn {
+    background-color: var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.disclaimer-btn:hover {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--card-bg);
+}
+
+h1 {
+    font-size: 1.25rem;
+    font-weight: 900; /* Whitney Black equivalent */
+    color: var(--text-dark);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1rem;
+    font-weight: 900; /* Whitney Black equivalent */
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 500; /* Whitney Medium equivalent */
+    text-transform: uppercase; /* Uppercase som spesifisert i fontguiden */
+    letter-spacing: 0.1em; /* 10% letter spacing */
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+.input-with-value {
+    display: flex;
+    flex-direction: column; /* Endret til column for å flytte teksten under slideren */
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.input-with-value span {
+    font-size: 1rem;
+    font-weight: 500;
+    width: 100%;
+    text-align: center; /* Sentrerer teksten under slideren */
+    color: var(--text-dark);
+    margin-top: 0.5rem;
+}
+
+input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    color: var(--text-dark);
+    background-color: var(--border-color);
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    background: var(--border-color);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(0,0,0,0.2);
+}
+
+/* Ny styling for de klikkbare boksene */
+.box-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.box-option {
+    background-color: var(--border-color);
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 400; /* Whitney Book equivalent for body text */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-dark);
+    user-select: none;
+}
+
+.box-option.active {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--card-bg);
+    box-shadow: var(--shadow);
+}
+
+.summary-container {
+    margin-top: 0.5rem; /* Mindre toppmargin for å redusere plassen */
+    background-color: var(--primary-bg);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.summary-text {
+    font-size: 1rem;
+    font-weight: 400; /* Whitney Book equivalent for body text */
+    line-height: 1.6;
+    color: var(--text-dark);
+}
+
+.summary-text strong {
+    font-weight: 700; /* Whitney Bold equivalent */
+}
+
+/* Chart styling */
+.chart-wrapper {
+    position: relative;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.fullscreen-btn {
+    background-color: var(--border-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-btn:hover {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--card-bg);
+}
+
+/* Fullscreen mode */
+.chart-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background-color: var(--primary-bg);
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.chart-container.fullscreen .chart-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-container.fullscreen #mainChart {
+    height: calc(100vh - 8rem) !important;
+    min-height: calc(100vh - 8rem) !important;
+    max-height: calc(100vh - 8rem) !important;
+}
+
+/* Chart-høyde økt med 40% for bedre synlighet */
+#mainChart, #volatilityChart, #stockAllocationChart, #returnChart {
+    height: 180px; /* Redusert fra 210px for å få plass til alle grafikkene */
+    width: 100%;
+    min-height: 180px; /* Sikrer statisk høyde */
+    max-height: 180px; /* Forhindrer at grafikken sklir */
+}
+
+/* Disclaimer Modal */
+.disclaimer-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.disclaimer-content {
+    background-color: var(--card-bg);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.disclaimer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.5rem 0 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.disclaimer-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.close-btn:hover {
+    background-color: var(--border-color);
+}
+
+.disclaimer-text {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+.disclaimer-text p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+}
+
+.disclaimer-text p:last-child {
+    margin-bottom: 0;
+}
+
+/* Styling for Chart.js tooltips */
+.chartjs-tooltip {
+    background-color: rgba(12, 27, 60, 0.9);
+    border: 1px solid #2b3a5a;
+    border-radius: 0.5rem;
+    color: #e1eafc;
+    font-family: 'Inter', sans-serif;
+}
