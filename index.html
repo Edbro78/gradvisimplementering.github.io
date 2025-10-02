@@ -95,23 +95,32 @@
 
         <!-- Grafikk-område -->
         <div class="chart-container">
-            <div class="chart-wrapper">
+            <div class="chart-card chart-wrapper">
                 <div class="chart-header">
                     <h2>Porteføljeverdi første 12 mnd</h2>
-                    <button id="fullscreenBtn" class="fullscreen-btn" title="Fullskjerm">⛶</button>
+                    <button class="fullscreen-btn" title="Fullskjerm">⛶</button>
                 </div>
                 <canvas id="mainChart"></canvas>
             </div>
-            <div>
-                <h2>Aksjeandel per mnd</h2>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Aksjeandel per mnd</h2>
+                    <button class="fullscreen-btn" title="Fullskjerm">⛶</button>
+                </div>
                 <canvas id="stockAllocationChart"></canvas>
             </div>
-            <div>
-                <h2>Avkastning per mnd</h2>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Avkastning per mnd</h2>
+                    <button class="fullscreen-btn" title="Fullskjerm">⛶</button>
+                </div>
                 <canvas id="returnChart"></canvas>
             </div>
-            <div>
-                <h2>Volatilitet per måned</h2>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h2>Volatilitet per måned</h2>
+                    <button class="fullscreen-btn" title="Fullskjerm">⛶</button>
+                </div>
                 <canvas id="volatilityChart"></canvas>
             </div>
         </div>
