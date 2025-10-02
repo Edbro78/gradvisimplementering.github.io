@@ -1,13 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
-    --primary-bg: #1a2a47; /* Mørk bakgrunn */
-    --card-bg: #0c1b3c;    /* Veldig mørk bakgrunn for paneler */
-    --text-dark: #e1eafc;  /* Lys tekst */
-    --text-light: #98a6c8; /* Lysere tekst for etiketter */
-    --border-color: #2b3a5a; /* Mørk kantlinje */
-    --accent-blue: #3498db;
-    --accent-green: #2ecc71;
+    /* Bakgrunner */
+    --primary-bg: #1A2A47; /* Hovedbakgrunn */
+    --card-bg: #24385B;    /* Card-bakgrunn (medium blå) */
+    --content-bg: rgba(15, 23, 42, 0.8); /* Innhold-bakgrunn (slate-900 med opacity) */
+    --body-fallback: #0f172a; /* Fallback slate-900 */
+
+    /* Tekst */
+    --text-dark: #E5E7EB;   /* Lys hovedtekst */
+    --text-light: #CBD5E1;  /* Medium tekst (labels) */
+    --text-secondary: #94a3b8; /* Slate-400 */
+
+    /* Border */
+    --border-color: #364A6E; /* Border-farge */
+
+    /* Aksenter */
+    --accent-blue: #60A5FA; /* Primær aksent (lys blå) */
+    --accent-secondary: #00A9E0; /* Sekundær aksent (vibrant blå) */
+    --accent-green: #4ade80; /* Suksess-grønn */
     --accent-red: #e74c3c; /* Rød for negative verdier */
     --accent-orange: #e67e22;
     --shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -74,6 +85,22 @@ body {
     border: 1px solid var(--border-color);
     box-sizing: border-box;
     overflow: hidden;
+}
+
+/* Layout for multiple charts inside the container */
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Luft mellom grafikkene */
+}
+
+/* Individual chart frames */
+.chart-card {
+    background-color: var(--content-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: var(--shadow);
 }
 
 .panel {
@@ -169,14 +196,15 @@ input[type="text"], input[type="number"], select {
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
     color: var(--text-dark);
-    background-color: var(--border-color);
+    background-color: var(--content-bg);
 }
 
 input[type="range"] {
     width: 100%;
     height: 8px;
     -webkit-appearance: none;
-    background: var(--border-color);
+    appearance: none;
+    background: var(--content-bg);
     border-radius: 5px;
     outline: none;
     cursor: pointer;
@@ -185,6 +213,7 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     height: 18px;
     width: 18px;
     border-radius: 50%;
@@ -202,7 +231,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .box-option {
-    background-color: var(--border-color);
+    background-color: var(--content-bg);
     border: 2px solid var(--border-color);
     border-radius: 0.5rem;
     padding: 0.75rem 0.5rem;
@@ -224,7 +253,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 .summary-container {
     margin-top: 0.5rem; /* Mindre toppmargin for å redusere plassen */
-    background-color: var(--primary-bg);
+    background-color: var(--content-bg);
     border-radius: 0.5rem;
     padding: 1rem;
 }
@@ -275,7 +304,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 /* Fullscreen mode */
-.chart-container.fullscreen {
+.chart-card.fullscreen {
     position: fixed;
     top: 0;
     left: 0;
@@ -287,14 +316,15 @@ input[type="range"]::-webkit-slider-thumb {
     box-sizing: border-box;
 }
 
-.chart-container.fullscreen .chart-wrapper {
+.chart-card.fullscreen .chart-wrapper,
+.chart-card.fullscreen {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.chart-container.fullscreen #mainChart {
+.chart-card.fullscreen canvas {
     height: calc(100vh - 8rem) !important;
     min-height: calc(100vh - 8rem) !important;
     max-height: calc(100vh - 8rem) !important;
@@ -388,9 +418,9 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Styling for Chart.js tooltips */
 .chartjs-tooltip {
-    background-color: rgba(12, 27, 60, 0.9);
-    border: 1px solid #2b3a5a;
+    background-color: var(--content-bg);
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
-    color: #e1eafc;
+    color: var(--text-dark);
     font-family: 'Inter', sans-serif;
 }
