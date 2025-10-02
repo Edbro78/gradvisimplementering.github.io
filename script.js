@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const bankRateContainer = document.getElementById('bankRateBoxes');
     const stockAllocationContainer = document.getElementById('stockAllocationInput');
     const frequencyContainer = document.getElementById('frequencyBoxes');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
     const chartContainer = document.querySelector('.chart-container');
     const disclaimerBtn = document.getElementById('disclaimerBtn');
     const disclaimerModal = document.getElementById('disclaimerModal');
@@ -22,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let volatilityChart;
     let stockAllocationChart;
     let returnChart;
-    let isFullscreen = false;
+    // Fullskjerm håndteres per grafikk-kort via klassen 'fullscreen'
     const investmentPeriod = 1; // Investeringsperioden er nå fastsatt til 1 år
     
     // Format number with thousand separators
@@ -258,29 +257,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to toggle fullscreen mode
-    function toggleFullscreen() {
-        if (!isFullscreen) {
-            // Enter fullscreen
-            chartContainer.classList.add('fullscreen');
-            fullscreenBtn.textContent = '⛶';
-            fullscreenBtn.title = 'Avslutt fullskjerm';
-            isFullscreen = true;
-            
-            // Hide other charts
-            const otherCharts = chartContainer.querySelectorAll('.chart-wrapper ~ div');
-            otherCharts.forEach(chart => chart.style.display = 'none');
+    function toggleFullscreen(event) {
+        const button = event.currentTarget;
+        const chartCard = button.closest('.chart-card');
+        if (!chartCard) return;
+
+        const entering = !chartCard.classList.contains('fullscreen');
+        if (entering) {
+            chartCard.classList.add('fullscreen');
+            button.title = 'Avslutt fullskjerm';
         } else {
-            // Exit fullscreen
-            chartContainer.classList.remove('fullscreen');
-            fullscreenBtn.textContent = '⛶';
-            fullscreenBtn.title = 'Fullskjerm';
-            isFullscreen = false;
-            
-            // Show other charts
-            const otherCharts = chartContainer.querySelectorAll('.chart-wrapper ~ div');
-            otherCharts.forEach(chart => chart.style.display = 'block');
+            chartCard.classList.remove('fullscreen');
+            button.title = 'Fullskjerm';
         }
-        
+
+        // Hide/show siblings when entering/exiting fullscreen
+        const container = chartCard.parentElement;
+        Array.from(container.children).forEach(child => {
+            if (child !== chartCard) {
+                child.style.display = entering ? 'none' : 'block';
+            }
+        });
+
         // Resize charts after transition
         setTimeout(() => {
             if (mainChart) mainChart.resize();
@@ -343,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const { monthlyVolatility, months } = calculateMonthlyVolatility(marketData);
         const { monthlyAllocation } = calculateMonthlyAllocation(investmentAmount, frequency, stockAllocation);
-        const { lumpSumReturns, periodicReturns, movingAverage } = calculateMonthlyReturns(fullLumpSumValues, totalValues);
+        const { lumpSumReturns, periodicReturns } = calculateMonthlyReturns(fullLumpSumValues, totalValues);
         
         const labels = Array.from({ length: days }, (_, i) => `Dag ${i + 1}`);
         const finalLumpSum = fullLumpSumValues[fullLumpSumValues.length - 1];
@@ -584,16 +582,15 @@ document.addEventListener('DOMContentLoaded', () => {
             returnChart.data.labels = months;
             returnChart.data.datasets[0].data = periodicReturns;
             returnChart.data.datasets[0].backgroundColor = periodicReturns.map(value => value >= 0 ? accentGreen : accentRed);
-            returnChart.data.datasets[1].data = movingAverage;
-            const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
-            const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
+            const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)));
+            const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)));
             returnChart.options.scales.y.min = Math.floor(minReturn) - 1;
             returnChart.options.scales.y.max = Math.ceil(maxReturn) + 1;
             returnChart.update();
         } else {
              const ctx = returnChartCanvas.getContext('2d');
-             const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
-             const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)), ...movingAverage.map(v => parseFloat(v)));
+             const minReturn = Math.min(...periodicReturns.map(v => parseFloat(v)));
+             const maxReturn = Math.max(...periodicReturns.map(v => parseFloat(v)));
 
              returnChart = new Chart(ctx, {
                  type: 'bar',
@@ -603,14 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
                          label: 'Månedlig avkastning (%)',
                          data: periodicReturns,
                          backgroundColor: periodicReturns.map(value => value >= 0 ? accentGreen : accentRed),
-                     }, {
-                         label: 'Glidende gjennomsnitt (3 mnd)',
-                         data: movingAverage,
-                         type: 'line',
-                         borderColor: accentBlue,
-                         borderWidth: 2,
-                         pointRadius: 4,
-                         fill: false
                      }]
                  },
                  options: {
@@ -676,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bankRateContainer.addEventListener('click', handleBoxClick);
     stockAllocationContainer.addEventListener('click', handleBoxClick);
     frequencyContainer.addEventListener('click', handleBoxClick);
-    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    document.querySelectorAll('.fullscreen-btn').forEach(btn => btn.addEventListener('click', toggleFullscreen));
     disclaimerBtn.addEventListener('click', showDisclaimer);
     closeDisclaimerBtn.addEventListener('click', hideDisclaimer);
     
