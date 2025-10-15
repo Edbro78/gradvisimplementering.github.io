@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const disclaimerBtn = document.getElementById('disclaimerBtn');
     const disclaimerModal = document.getElementById('disclaimerModal');
     const closeDisclaimerBtn = document.getElementById('closeDisclaimer');
+    const outputBtn = document.getElementById('outputBtn');
+    const outputModal = document.getElementById('outputModal');
+    const closeOutputBtn = document.getElementById('closeOutput');
+    const outputTextarea = document.getElementById('outputTextarea');
+    const copyOutputBtn = document.getElementById('copyOutputBtn');
     
     let mainChart;
     let volatilityChart;
@@ -28,6 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatNumber(number) {
         return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
+
+    // Norwegian number/currency formatters
+    const nf = new Intl.NumberFormat('no-NO');
+    const cf0 = new Intl.NumberFormat('no-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 0 });
+    const pf2 = new Intl.NumberFormat('no-NO', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
 
     // Function to simulate market data
     function simulateMarketData(marketGrowth, volatility, days) {
@@ -298,6 +308,25 @@ document.addEventListener('DOMContentLoaded', () => {
         disclaimerModal.style.display = 'none';
     }
 
+    // Output modal controls
+    function showOutput() {
+        // Refresh text every time user opens
+        outputTextarea.value = generateOutputText();
+        outputModal.style.display = 'flex';
+        // Reset copy button visual state
+        copyOutputBtn.classList.remove('copied');
+        const label = copyOutputBtn.querySelector('.copy-label');
+        const icon = copyOutputBtn.querySelector('.copy-icon');
+        if (label) label.textContent = 'Kopier';
+        if (icon) icon.textContent = '📋';
+        // Focus textarea for quick selection
+        outputTextarea.focus();
+    }
+
+    function hideOutput() {
+        outputModal.style.display = 'none';
+    }
+
     // Function to get the value of the active box in a container
     function getActiveBoxValue(container) {
         const activeBox = container.querySelector('.box-option.active');
@@ -324,6 +353,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboard();
     });
 
+    // Keep last computed snapshot for output generation
+    let lastSnapshot = null;
+
     // Main function to update the dashboard
     function updateDashboard() {
         const investmentAmount = parseFloat(investmentAmountInput.value); 
@@ -346,6 +378,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const labels = Array.from({ length: days }, (_, i) => `Dag ${i + 1}`);
         const finalLumpSum = fullLumpSumValues[fullLumpSumValues.length - 1];
         const finalPeriodic = totalValues[totalValues.length - 1];
+
+        // Snapshot for output
+        lastSnapshot = {
+            inputs: {
+                investmentAmount,
+                marketGrowth,
+                volatility,
+                bankRate,
+                stockAllocation,
+                frequency
+            },
+            results: {
+                finalLumpSum,
+                finalPeriodic,
+                monthlyVolatility,
+                monthlyAllocation,
+                lumpSumReturns,
+                periodicReturns
+            }
+        };
         
         const rootStyles = getComputedStyle(document.documentElement);
         const accentBlue = rootStyles.getPropertyValue('--accent-blue').trim();
@@ -653,6 +705,88 @@ document.addEventListener('DOMContentLoaded', () => {
         
     }
 
+    // Build output text in Norwegian with sections
+    function generateOutputText() {
+        try {
+            if (!lastSnapshot) {
+                updateDashboard();
+            }
+            const s = lastSnapshot;
+            if (!s) return 'Ingen data tilgjengelig.';
+
+            const freqLabelMap = {
+                'daily': 'Daglig',
+                'weekly': 'Ukentlig',
+                'monthly': 'Månedlig',
+                'quarterly': 'Kvartalsvis',
+                'half-yearly': 'Halvårlig',
+                'yearly': 'Årlig'
+            };
+
+            const header = '— Output (sanntidsdata) —';
+
+            const inputs = [
+                `Total investering: ${cf0.format(s.inputs.investmentAmount)}`,
+                `Markedsutvikling: ${pf2.format(s.inputs.marketGrowth)}%`,
+                `Volatilitet: ${pf2.format(s.inputs.volatility)}%`,
+                `Bankrente (ventende kapital): ${pf2.format(s.inputs.bankRate)}%`,
+                `Aksjeandel første år: ${pf2.format(s.inputs.stockAllocation)}%`,
+                `Investeringsfrekvens: ${freqLabelMap[s.inputs.frequency] || s.inputs.frequency}`
+            ].join('\n');
+
+            const results = [
+                `Sluttverdi engangsinnskudd dag 1: ${cf0.format(s.results.finalLumpSum)}`,
+                `Sluttverdi gradvis implementering: ${cf0.format(s.results.finalPeriodic)}`
+            ].join('\n');
+
+            return [
+                header,
+                '',
+                '[Inndata]',
+                inputs,
+                '',
+                '[Resultater]',
+                results
+            ].join('\n');
+        } catch (err) {
+            return 'Kunne ikke generere output.';
+        }
+    }
+
+    // Copy to clipboard with fallback and temporary success state
+    let copyResetTimer = null;
+    async function copyOutput() {
+        const text = outputTextarea.value;
+        if (!text) return;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                // Fallback
+                const temp = document.createElement('textarea');
+                temp.value = text;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+            }
+            // Success UI
+            copyOutputBtn.classList.add('copied');
+            const label = copyOutputBtn.querySelector('.copy-label');
+            const icon = copyOutputBtn.querySelector('.copy-icon');
+            if (label) label.textContent = 'Kopiert!';
+            if (icon) icon.textContent = '✔';
+            if (copyResetTimer) clearTimeout(copyResetTimer);
+            copyResetTimer = setTimeout(() => {
+                copyOutputBtn.classList.remove('copied');
+                if (label) label.textContent = 'Kopier';
+                if (icon) icon.textContent = '📋';
+            }, 2000);
+        } catch (e) {
+            alert('Kopiering feilet. Marker og kopier manuelt (Ctrl+C).');
+        }
+    }
+
     // Update the display value of the range input in real time
     investmentAmountInput.addEventListener('input', () => {
         const value = parseInt(investmentAmountInput.value);
@@ -668,11 +802,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.fullscreen-btn').forEach(btn => btn.addEventListener('click', toggleFullscreen));
     disclaimerBtn.addEventListener('click', showDisclaimer);
     closeDisclaimerBtn.addEventListener('click', hideDisclaimer);
+    outputBtn.addEventListener('click', showOutput);
+    closeOutputBtn.addEventListener('click', hideOutput);
+    copyOutputBtn.addEventListener('click', copyOutput);
     
-    // Close modal when clicking outside of it
+    // Close modals when clicking outside of content
     disclaimerModal.addEventListener('click', (e) => {
         if (e.target === disclaimerModal) {
             hideDisclaimer();
+        }
+    });
+    outputModal.addEventListener('click', (e) => {
+        if (e.target === outputModal) {
+            hideOutput();
+        }
+    });
+
+    // Global Escape key to close any open modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (disclaimerModal.style.display === 'flex') hideDisclaimer();
+            if (outputModal.style.display === 'flex') hideOutput();
         }
     });
     
