@@ -126,6 +126,9 @@
         </div>
     </div>
 
+    <!-- Output floating button -->
+    <button id="outputBtn" class="output-btn" title="Output">Output</button>
+
     <!-- Disclaimer Modal -->
     <div id="disclaimerModal" class="disclaimer-modal">
         <div class="disclaimer-content">
@@ -136,6 +139,25 @@
             <div class="disclaimer-text">
                 <p>Resultatet av de beregninger som gjøres i kalkulatoren vil variere ut ifra hvilke tall som legges til grunn. Tallene som legges til grunn bestemmes i samtale mellom rådgiver og deltaker i møtet. Resultatet vil dermed kunne variere fra de tallene som fremkommer offisielle dokumenter i tilknytning til ytelse av investeringsrådgivning.</p>
                 <p>Beregningene i kalkulatoren må ansees som statiske og er kun ment for illustrasjonsformål. For konkrete fremstillinger, vises det til offisielle dokumenter knyttet til rådgivningen.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Output Modal -->
+    <div id="outputModal" class="output-modal" aria-hidden="true">
+        <div class="output-content" role="dialog" aria-modal="true" aria-labelledby="outputTitle">
+            <div class="output-header">
+                <h3 id="outputTitle">Output</h3>
+                <button id="closeOutput" class="close-btn" aria-label="Lukk">&times;</button>
+            </div>
+            <div class="output-body">
+                <div class="textarea-wrapper">
+                    <textarea id="outputTextarea" class="output-textarea" readonly></textarea>
+                    <button id="copyOutputBtn" type="button" class="copy-btn">
+                        <span class="copy-icon" aria-hidden="true">📋</span>
+                        <span class="copy-label">Kopier</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
