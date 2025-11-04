@@ -1,29 +1,133 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-:root {
-    /* Bakgrunner */
-    --primary-bg: #1A2A47; /* Hovedbakgrunn */
-    --card-bg: #24385B;    /* Card-bakgrunn (medium blå) */
-    --content-bg: rgba(15, 23, 42, 0.8); /* Innhold-bakgrunn (slate-900 med opacity) */
-    --body-fallback: #0f172a; /* Fallback slate-900 */
+ :root {
+    --background: oklch(0.9759 0.0029 264.5420);
+    --foreground: oklch(0.2722 0.1053 258.9631);
+    --card: oklch(1.0000 0 0);
+    --card-foreground: oklch(0.2722 0.1053 258.9631);
+    --popover: oklch(1.0000 0 0);
+    --popover-foreground: oklch(0.2722 0.1053 258.9631);
+    --primary: oklch(0.5190 0.2061 260.1727);
+    --primary-foreground: oklch(1.0000 0 0);
+    --secondary: oklch(0.9510 0.0063 255.4756);
+    --secondary-foreground: oklch(0.2722 0.1053 258.9631);
+    --muted: oklch(0.9846 0.0017 247.8389);
+    --muted-foreground: oklch(0.5409 0.0616 258.6202);
+    --accent: oklch(0.9489 0.0188 255.5341);
+    --accent-foreground: oklch(0.4562 0.1809 260.1560);
+    --destructive: oklch(0.4322 0.1500 28.9906);
+    --destructive-foreground: oklch(1.0000 0 0);
+    --border: oklch(0.9324 0.0080 253.8552);
+    --input: oklch(0.9276 0.0058 264.5313);
+    --ring: oklch(0.6231 0.1880 259.8145);
+    --chart-1: oklch(0.8479 0.0603 257.7878);
+    --chart-2: oklch(0.7450 0.1024 258.2961);
+    --chart-3: oklch(0.6020 0.1679 258.6201);
+    --chart-4: oklch(0.4562 0.1809 260.1560);
+    --chart-5: oklch(0.2722 0.1053 258.9631);
+    --sidebar: oklch(0.9846 0.0017 247.8389);
+    --sidebar-foreground: oklch(0.3211 0 0);
+    --sidebar-primary: oklch(0.6231 0.1880 259.8145);
+    --sidebar-primary-foreground: oklch(1.0000 0 0);
+    --sidebar-accent: oklch(0.9514 0.0250 236.8242);
+    --sidebar-accent-foreground: oklch(0.3791 0.1378 265.5222);
+    --sidebar-border: oklch(0.9276 0.0058 264.5313);
+    --sidebar-ring: oklch(0.6231 0.1880 259.8145);
+    --font-sans: Inter, sans-serif;
+    --font-serif: Source Serif 4, serif;
+    --font-mono: JetBrains Mono, monospace;
+    --radius: 0.375rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 3px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.1;
+    --shadow-color: oklch(0 0 0);
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
 
-    /* Tekst */
-    --text-dark: #E5E7EB;   /* Lys hovedtekst */
-    --text-light: #CBD5E1;  /* Medium tekst (labels) */
-    --text-secondary: #94a3b8; /* Slate-400 */
-
-    /* Border */
-    --border-color: #364A6E; /* Border-farge */
-
-    /* Aksenter */
-    --accent-blue: #60A5FA; /* Primær aksent (lys blå) */
-    --accent-secondary: #00A9E0; /* Sekundær aksent (vibrant blå) */
-    --accent-green: #4ade80; /* Suksess-grønn */
-    --accent-red: #e74c3c; /* Rød for negative verdier */
+    /* Kompatibilitetsvariabler brukt i eksisterende CSS */
+    --primary-bg: var(--background);
+    --card-bg: var(--card);
+    --content-bg: var(--muted);
+    --body-fallback: #0f172a;
+    --text-dark: #000000;
+    --text-light: var(--muted-foreground);
+    --text-secondary: var(--muted-foreground);
+    --border-color: var(--border);
+    --accent-blue: var(--primary);
+    --accent-secondary: var(--accent);
+    --accent-green: #4ade80;
+    --accent-red: var(--destructive);
     --accent-orange: #e67e22;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    --chart-bar-gray: #5d6d7e; /* Ny grå farge for søyler */
-    --chart-bar-light-blue: #6cb8e8; /* Ny lysere blå for søyler */
+    --shadow: var(--shadow-md);
+    --chart-bar-gray: var(--chart-1);
+    --chart-bar-light-blue: var(--chart-2);
+}
+
+.dark {
+    --background: oklch(0.2046 0 0);
+    --foreground: #ffffff; /* Force pure white text in dark mode */
+    --card: oklch(0.2686 0 0);
+    --card-foreground: oklch(0.9219 0 0);
+    --popover: oklch(0.2686 0 0);
+    --popover-foreground: oklch(0.9219 0 0);
+    --primary: oklch(0.6231 0.1880 259.8145);
+    --primary-foreground: oklch(1.0000 0 0);
+    --secondary: oklch(0.2686 0 0);
+    --secondary-foreground: #ffffff;
+    --muted: oklch(0.2393 0 0);
+    --muted-foreground: #e5e7eb;
+    --accent: oklch(0.3791 0.1378 265.5222);
+    --accent-foreground: oklch(0.8823 0.0571 254.1284);
+    --destructive: oklch(0.6368 0.2078 25.3313);
+    --destructive-foreground: oklch(1.0000 0 0);
+    --border: oklch(0.3715 0 0);
+    --input: oklch(0.3715 0 0);
+    --ring: oklch(0.6231 0.1880 259.8145);
+    --chart-1: oklch(0.7137 0.1434 254.6240);
+    --chart-2: oklch(0.6231 0.1880 259.8145);
+    --chart-3: oklch(0.5461 0.2152 262.8809);
+    --chart-4: oklch(0.4882 0.2172 264.3763);
+    --chart-5: oklch(0.4244 0.1809 265.6377);
+    --sidebar: oklch(0.2046 0 0);
+    --sidebar-foreground: oklch(0.9219 0 0);
+    --sidebar-primary: oklch(0.6231 0.1880 259.8145);
+    --sidebar-primary-foreground: oklch(1.0000 0 0);
+    --sidebar-accent: oklch(0.3791 0.1378 265.5222);
+    --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
+    --sidebar-border: oklch(0.3715 0 0);
+    --sidebar-ring: oklch(0.6231 0.1880 259.8145);
+    --font-sans: Inter, sans-serif;
+    --font-serif: Source Serif 4, serif;
+    --font-mono: JetBrains Mono, monospace;
+    --radius: 0.375rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 3px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.1;
+    --shadow-color: oklch(0 0 0);
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    /* Ensure compatibility variables also yield white text */
+    --text-dark: #ffffff;
+    --text-light: #e5e7eb;
+    --text-secondary: #cbd5e1;
 }
 
 /* Sikrer at html og body fyller hele visningsområdet */
@@ -44,6 +148,7 @@ body {
     align-items: flex-start;
     box-sizing: border-box;
     min-height: 100vh;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 .dashboard-container {
@@ -118,6 +223,12 @@ body {
     margin-bottom: 0;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .disclaimer-btn {
     background-color: var(--border-color);
     border: 1px solid var(--border-color);
@@ -136,6 +247,30 @@ body {
     background-color: var(--accent-blue);
     border-color: var(--accent-blue);
     color: var(--card-bg);
+}
+
+.theme-toggle {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    border-color: var(--accent);
+}
+
+.theme-toggle:active {
+    transform: translateY(1px);
 }
 
 h1 {
@@ -199,6 +334,13 @@ input[type="text"], input[type="number"], select {
     background-color: var(--content-bg);
 }
 
+/* Light mode subtle elevation for form controls */
+html:not(.dark) input[type="text"],
+html:not(.dark) input[type="number"],
+html:not(.dark) select {
+    box-shadow: var(--shadow-sm);
+}
+
 input[type="range"] {
     width: 100%;
     height: 8px;
@@ -244,6 +386,15 @@ input[type="range"]::-webkit-slider-thumb {
     user-select: none;
 }
 
+/* Light mode subtle elevation for selectable boxes */
+html:not(.dark) .box-option {
+    box-shadow: var(--shadow-sm);
+}
+
+html:not(.dark) .box-option:hover {
+    box-shadow: var(--shadow-md);
+}
+
 .box-option.active {
     background-color: var(--accent-blue);
     border-color: var(--accent-blue);
@@ -256,6 +407,24 @@ input[type="range"]::-webkit-slider-thumb {
     background-color: var(--content-bg);
     border-radius: 0.5rem;
     padding: 1rem;
+}
+
+/* Light mode subtle elevation for summary */
+html:not(.dark) .summary-container {
+    box-shadow: var(--shadow-sm);
+}
+
+/* Light mode: elevate panels and charts for a crisp card look */
+html:not(.dark) .panel,
+html:not(.dark) .chart-container,
+html:not(.dark) .chart-card,
+html:not(.dark) .disclaimer-content {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Stronger elevation when a box is active */
+html:not(.dark) .box-option.active {
+    box-shadow: var(--shadow-lg);
 }
 
 .summary-text {
@@ -463,8 +632,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .output-content {
-    background-color: #ffffff; /* white */
-    color: #0f172a;
+    background-color: var(--card); /* white */
+    color: var(--foreground);
     border-radius: 0.75rem;
     width: 100%;
     max-width: 42rem; /* max-w-2xl */
@@ -479,14 +648,14 @@ input[type="range"]::-webkit-slider-thumb {
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border);
 }
 
 .output-header h3 {
     margin: 0;
     font-size: 1.125rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--foreground);
 }
 
 .output-body {
@@ -503,17 +672,17 @@ input[type="range"]::-webkit-slider-thumb {
     resize: vertical;
     padding: 0.875rem 1rem 2.75rem 1rem; /* extra bottom padding for button space */
     border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
-    background-color: #ffffff;
-    color: #0f172a;
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    color: var(--foreground);
     font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
     line-height: 1.5;
 }
 
 .output-textarea:focus {
     outline: none;
-    border-color: #60A5FA; /* blue-400 */
-    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.25);
+    border-color: var(--ring);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.10);
 }
 
 .copy-btn {
@@ -527,16 +696,16 @@ input[type="range"]::-webkit-slider-thumb {
     font-size: 0.75rem;
     font-weight: 600;
     border-radius: 0.5rem;
-    background-color: #3b82f6; /* blue-500 */
-    color: white;
-    border: 1px solid #2563eb; /* blue-600 */
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    border: 1px solid var(--ring);
     cursor: pointer;
     transition: transform 0.1s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .copy-btn:hover { 
-    background-color: #2563eb; /* blue-600 */
-    border-color: #1d4ed8; /* blue-700 */
+    background-color: var(--ring);
+    border-color: var(--ring);
 }
 
 .copy-btn:active {
